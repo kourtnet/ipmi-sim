@@ -1,6 +1,5 @@
 # IPMI Simulator
-
-Простой IPMI симулятор на основе ipmi_sim, собранный в контейнер на базе Alpine.
+Простой IPMI симулятор на основе [ipmi_sim](https://github.com/cminyard/openipmi), собранный в контейнер на базе Alpine.
 ## Сенсоры
 
 | #  | Имя           | Тип         | Диапазон динамики       |
