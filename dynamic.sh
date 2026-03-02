@@ -1,7 +1,7 @@
 #!/bin/sh
 
 POLL_DIR="/tmp/ipmi"
-INTERVAL="${DYNAMIC_INTERVAL:-5}"
+INTERVAL="20"
 
 mkdir -p "$POLL_DIR"
 

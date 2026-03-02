@@ -26,8 +26,6 @@ RUN mkdir -p state/ipmi_sim/IPMI-SIM-SERVER && \
 
 FROM alpine:3.19
 
-ENV DYNAMIC_INTERVAL=5
-
 RUN apk add --no-cache \
     openssl \
     ncurses-libs \
