@@ -1,52 +1,52 @@
-FROM debian:11-slim
+# ========== Stage 1: builder ==========
+FROM alpine:3.19 AS builder
 
-ENV DEBIAN_FRONTEND=noninteractive
+RUN apk add --no-cache \
+    build-base wget \
+    openssl-dev ncurses-dev glib-dev popt-dev \
+    linux-headers
 
-# Build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential wget ca-certificates \
-    libssl-dev libncurses-dev libglib2.0-dev \
-    libpopt-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Build OpenIPMI 2.0.25 from source
 WORKDIR /tmp
 RUN wget https://sourceforge.net/projects/openipmi/files/OpenIPMI-2.0.25.tar.gz -O OpenIPMI-2.0.25.tar.gz && \
     tar xzf OpenIPMI-2.0.25.tar.gz && \
     cd OpenIPMI-2.0.25 && \
-    ./configure --prefix=/opt/openipmi-2.0.25 --without-perl --without-python && \
+    ./configure \
+      --prefix=/opt/openipmi \
+      --without-perl \
+      --without-python \
+      --without-tcl && \
     make -j"$(nproc)" && \
-    make install && \
-    ldconfig && \
-    rm -rf /tmp/OpenIPMI-2.0.25*
+    make install
 
-ENV PATH=/opt/openipmi-2.0.25/bin:$PATH
+# ========== Stage 2: runtime ==========
+FROM alpine:3.19
+
+ENV DYNAMIC_INTERVAL=5
+
+RUN apk add --no-cache \
+    openssl \        # даёт libcrypto.so.3/libssl.so.3[web:181]
+    ncurses-libs \
+    glib \
+    popt \           # даёт libpopt.so.0[web:167][web:168]
+    bash
 
 WORKDIR /ipmisim
 
-# Copy simulator config files
+COPY --from=builder /opt/openipmi /opt/openipmi
+ENV PATH=/opt/openipmi/bin:$PATH
+
+# В musl ldconfig по сути не нужен, можно не вызывать
+# Если очень хочется, можно добавить:
+# ENV LD_LIBRARY_PATH=/opt/openipmi/lib
+
+COPY --from=builder /build/state ./state
 COPY lan.conf sim.emu sim.sdrs ./
-
-# Compile SDR
-RUN mkdir -p ./state/ipmi_sim/IPMI-SIM-SERVER && \
-    sdrcomp -o ./state/ipmi_sim/IPMI-SIM-SERVER/sdr.20.main ./sim.sdrs
-
-# Create stub scripts referenced by lan.conf
-RUN mkdir -p /etc/ipmi /tmp/ipmisim/bin && \
-    printf '#!/bin/sh\nexit 0\n' > /etc/ipmi/lancontrol && chmod +x /etc/ipmi/lancontrol && \
-    printf '#!/bin/sh\nexit 0\n' > /tmp/ipmisim/bin/chassis_control.sh && chmod +x /tmp/ipmisim/bin/chassis_control.sh
-
-# Create poll file directory
-RUN mkdir -p /tmp/ipmi
-
-# Copy dynamic value generator and entrypoint
 COPY dynamic.sh entrypoint.sh ./
 RUN chmod +x dynamic.sh entrypoint.sh
 
-# IPMI RMCP port
+RUN mkdir -p /etc/ipmi /tmp/ipmisim/bin /tmp/ipmi && \
+    printf '#!/bin/sh\nexit 0\n' > /etc/ipmi/lancontrol && chmod +x /etc/ipmi/lancontrol && \
+    printf '#!/bin/sh\nexit 0\n' > /tmp/ipmisim/bin/chassis_control.sh && chmod +x /tmp/ipmisim/bin/chassis_control.sh
+
 EXPOSE 623/udp
-
-# dynamic.sh interval (seconds), override with -e DYNAMIC_INTERVAL=N
-ENV DYNAMIC_INTERVAL=5
-
 ENTRYPOINT ["/ipmisim/entrypoint.sh"]
