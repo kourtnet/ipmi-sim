@@ -1,0 +1,144 @@
+#
+# Extended IPMI BMC Emulation Configuration
+# Defines Management Controller, sensors, thresholds, events
+#
+# Dynamic sensors use "poll <ms> file <path>" to read values
+# from files updated by dynamic.sh
+#
+
+# The BMC is the MC at address 0x20
+mc_setbmc 0x20
+
+# Add the BMC
+#       IPMB  DevID  Has Device      Device  Major   Minor   Device  Manufctr  Product
+#       Addr         SDRs?           Rev     FW Rev  FW Rev  Supprt  ID        ID
+mc_add  0x20  0      no-device-sdrs  0x23    0x09    0x08    0x9f    0x1291    0xf02    persist_sdr
+
+# Enable the System Event Log
+sel_enable  0x20  1000  0x0a
+
+# ===================================================
+# Sensor 0: Watchdog (must be sensor 0, discrete)
+# ===================================================
+sensor_add 0x20 0 0 35 0x6f event-only
+sensor_set_event_support 0x20 0 0 enable scanning per-state \
+    000000000001111 000000000000000 \
+    000000000001111 000000000000000
+
+# ===================================================
+# Sensor 1: CPU Temp (Temperature, threshold)
+# Dynamic: reads value from /tmp/ipmi/cpu_temp.ipm every 1s
+# ===================================================
+sensor_add 0x20 0 1 0x01 0x01 poll 1000 file "/tmp/ipmi/cpu_temp.ipm"
+sensor_set_threshold 0x20 0 1 settable 111000 0x5F 0x55 0x46 0x00 0x00 0x00
+sensor_set_event_support 0x20 0 1 enable scanning per-state \
+    000111111000000 000111111000000 \
+    000111111000000 000111111000000
+
+# ===================================================
+# Sensor 2: System Temp (Temperature, threshold)
+# Dynamic: reads value from /tmp/ipmi/sys_temp.ipm every 1s
+# ===================================================
+sensor_add 0x20 0 2 0x01 0x01 poll 1000 file "/tmp/ipmi/sys_temp.ipm"
+sensor_set_threshold 0x20 0 2 settable 111000 0x55 0x4B 0x3C 0x00 0x00 0x00
+sensor_set_event_support 0x20 0 2 enable scanning per-state \
+    000111111000000 000111111000000 \
+    000111111000000 000111111000000
+
+# ===================================================
+# Sensor 3: Peripheral Temp (Temperature, threshold)
+# Dynamic: reads value from /tmp/ipmi/per_temp.ipm every 1s
+# ===================================================
+sensor_add 0x20 0 3 0x01 0x01 poll 1000 file "/tmp/ipmi/per_temp.ipm"
+sensor_set_threshold 0x20 0 3 settable 111000 0x50 0x46 0x3C 0x00 0x00 0x00
+sensor_set_event_support 0x20 0 3 enable scanning per-state \
+    000111111000000 000111111000000 \
+    000111111000000 000111111000000
+
+# ===================================================
+# Sensor 4: FAN1 (Fan, threshold)
+# Dynamic: reads value from /tmp/ipmi/fan1.ipm every 1s
+# raw value * 100 = RPM (m=100 in SDR)
+# ===================================================
+sensor_add 0x20 0 4 0x04 0x01 poll 1000 file "/tmp/ipmi/fan1.ipm"
+sensor_set_threshold 0x20 0 4 settable 000111 0x00 0x00 0x00 0x05 0x03 0x02
+sensor_set_event_support 0x20 0 4 enable scanning per-state \
+    000111111000000 000111111000000 \
+    000111111000000 000111111000000
+
+# ===================================================
+# Sensor 5: FAN2 (Fan, threshold)
+# Dynamic: reads value from /tmp/ipmi/fan2.ipm every 1s
+# ===================================================
+sensor_add 0x20 0 5 0x04 0x01 poll 1000 file "/tmp/ipmi/fan2.ipm"
+sensor_set_threshold 0x20 0 5 settable 000111 0x00 0x00 0x00 0x05 0x03 0x02
+sensor_set_event_support 0x20 0 5 enable scanning per-state \
+    000111111000000 000111111000000 \
+    000111111000000 000111111000000
+
+# ===================================================
+# Sensor 6: Voltage 12V (Voltage, threshold)
+# Dynamic: reads value from /tmp/ipmi/v12.ipm every 2s
+# raw * 0.1 = Volts (m=1, r_exp=-1 in SDR)
+# ===================================================
+sensor_add 0x20 0 6 0x02 0x01 poll 2000 file "/tmp/ipmi/v12.ipm"
+sensor_set_threshold 0x20 0 6 settable 111111 0x8E 0x82 0x7D 0x6B 0x65 0x5A
+sensor_set_event_support 0x20 0 6 enable scanning per-state \
+    000111111000000 000111111000000 \
+    000111111000000 000111111000000
+
+# ===================================================
+# Sensor 7: Voltage 5V (Voltage, threshold)
+# Dynamic: reads value from /tmp/ipmi/v5.ipm every 2s
+# raw * 0.1 = Volts  =>  raw 50 = 5.0V
+# ===================================================
+sensor_add 0x20 0 7 0x02 0x01 poll 2000 file "/tmp/ipmi/v5.ipm"
+sensor_set_threshold 0x20 0 7 settable 111111 0x3C 0x37 0x35 0x2D 0x2B 0x28
+sensor_set_event_support 0x20 0 7 enable scanning per-state \
+    000111111000000 000111111000000 \
+    000111111000000 000111111000000
+
+# ===================================================
+# Sensor 8: Voltage 3.3V (Voltage, threshold)
+# Dynamic: reads value from /tmp/ipmi/v33.ipm every 2s
+# raw * 0.1 = Volts  =>  raw 33 = 3.3V
+# ===================================================
+sensor_add 0x20 0 8 0x02 0x01 poll 2000 file "/tmp/ipmi/v33.ipm"
+sensor_set_threshold 0x20 0 8 settable 111111 0x27 0x24 0x23 0x1E 0x1C 0x19
+sensor_set_event_support 0x20 0 8 enable scanning per-state \
+    000111111000000 000111111000000 \
+    000111111000000 000111111000000
+
+# ===================================================
+# Sensor 9: Voltage Vcore (Voltage, threshold)
+# Dynamic: reads value from /tmp/ipmi/vcore.ipm every 2s
+# raw * 0.01 = Volts (m=1, r_exp=-2 in SDR)  =>  raw 130 = 1.30V
+# ===================================================
+sensor_add 0x20 0 9 0x02 0x01 poll 2000 file "/tmp/ipmi/vcore.ipm"
+sensor_set_threshold 0x20 0 9 settable 111111 0xA5 0x96 0x91 0x6E 0x64 0x5A
+sensor_set_event_support 0x20 0 9 enable scanning per-state \
+    000111111000000 000111111000000 \
+    000111111000000 000111111000000
+
+# ===================================================
+# Sensor 10: PSU Status (Power Supply, discrete)
+# Static
+# ===================================================
+sensor_add 0x20 0 10 0x08 0x6f
+sensor_set_bit_clr_rest 0x20 0 10 0 1
+sensor_set_event_support 0x20 0 10 enable scanning per-state \
+    000000000000011 000000000000011 \
+    000000000000011 000000000000011
+
+# ===================================================
+# Sensor 11: Chassis Intrusion (Physical Security, discrete)
+# Static
+# ===================================================
+sensor_add 0x20 0 11 0x05 0x6f
+sensor_set_bit_clr_rest 0x20 0 11 0 0
+sensor_set_event_support 0x20 0 11 enable scanning per-state \
+    000000000000011 000000000000011 \
+    000000000000011 000000000000011
+
+# Turn on the BMC
+mc_enable 0x20
