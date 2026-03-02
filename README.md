@@ -39,7 +39,7 @@ docker run -d --name ipmi-sim \
 ## Проверка
 
 ```bash
-ipmitool -I lanplus -H 127.0.0.1 -p 623 -U ADMIN -P ADMIN sensor -C 3
+ipmitool -I lanplus -H 127.0.0.1 -p 623 -U ADMIN -P ADMIN sdr elist -C 3
 ```
 
 Примерный вывод, который должен быть получен:
