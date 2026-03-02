@@ -5,7 +5,6 @@ INTERVAL="${DYNAMIC_INTERVAL:-5}"
 
 mkdir -p "$POLL_DIR"
 
-# стартовые значения
 CPU=30
 SYS=25
 PER=20
@@ -17,8 +16,6 @@ V33=32
 VCORE=120
 
 while true; do
-  # простая «пила» вместо RANDOM
-
   CPU=$((CPU + 1))
   [ "$CPU" -gt 70 ] && CPU=30
   SYS=$((SYS + 1))
