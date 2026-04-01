@@ -21,11 +21,11 @@ docker pull nissanissa/ipmi-sim:latest
 ```
 Также можно собрать образ из исходников в данном репозитории:
 ```bash
-docker build -t ipmi-sim:latest .
+docker build -t nissanissa/ipmi-sim:latest .
 ```
 Далее нужно запустить контейнер:
 ```bash
-docker run -d --rm --name ipmi-sim -p 623:623/udp ipmi-sim:latest
+docker run -d --rm --name ipmi-sim -p 623:623/udp nissanissa/ipmi-sim:latest
 ```
 Затем зайти в его оболочку:
 ```bash
