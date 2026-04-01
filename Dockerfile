@@ -31,7 +31,12 @@ RUN apk add --no-cache \
     ncurses-libs \
     glib \
     popt \
-    bash
+    bash \
+    ipmitool
+
+RUN mv /usr/sbin/ipmitool /usr/sbin/ipmitool.real
+COPY ipmitool_wrapper.sh /usr/bin/ipmitool
+RUN chmod +x /usr/bin/ipmitool
 
 WORKDIR /ipmisim
 
@@ -40,12 +45,21 @@ ENV PATH=/opt/openipmi/bin:$PATH
 COPY --from=builder /build/state ./state
 
 COPY lan.conf sim.emu sim.sdrs ./
-COPY dynamic.sh entrypoint.sh ./
-RUN chmod +x dynamic.sh entrypoint.sh
+
+COPY verdict.sh entrypoint.sh \
+    inject_cpu_overheat.sh \
+    chassis_control.sh \
+    analyze.sh \
+    ./
+RUN chmod +x verdict.sh \
+    entrypoint.sh \
+    inject_cpu_overheat.sh \
+    chassis_control.sh \
+    analyze.sh
 
 RUN mkdir -p /etc/ipmi /tmp/ipmisim/bin /tmp/ipmi && \
     printf '#!/bin/sh\nexit 0\n' > /etc/ipmi/lancontrol && chmod +x /etc/ipmi/lancontrol && \
-    printf '#!/bin/sh\nexit 0\n' > /tmp/ipmisim/bin/chassis_control.sh && chmod +x /tmp/ipmisim/bin/chassis_control.sh
+    cp /ipmisim/chassis_control.sh /tmp/ipmisim/bin/chassis_control.sh && chmod +x /tmp/ipmisim/bin/chassis_control.sh
 
 EXPOSE 623/udp
 ENTRYPOINT ["/ipmisim/entrypoint.sh"]
